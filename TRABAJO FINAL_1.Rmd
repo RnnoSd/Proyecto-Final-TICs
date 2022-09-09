@@ -1,0 +1,105 @@
+---
+title: "BASE DE DATOS"
+author: 'GRUPO 13: Andrés Báez'
+date: "2022-09-08"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Pregunta 2
+
+```{r}
+library(readxl)
+   Base_de_datos_ <- read_excel("Documentos SAID/Tercer Semestre/Ultimo proyecto/Base de datos .xlsx")
+   View(Base_de_datos_)
+```
+
+##Pregunta 3
+
+##Pregunta 4
+
+```{r eval=TRUE}
+library(ggplot2)
+ggplot(data=Base_de_datos_, aes(x=edad,y=ausencia_trabajo)) +
+    geom_point() +
+    xlab("Edad") + 
+    ylab("Ausencia del trabajo")+
+ ggtitle("Edad vs Ausencia del trabajo")
+```
+
+##Pregunta 5
+
+```{r}
+nueva_base13 <- Base_de_datos_[,7]
+summary(nueva_base13,)
+```
+
+La función `summary(objeto, maxsum = 7, digits = max(3, getOption("digits")-3), ...)` es una función *built-in* en **R**. Su utilidad se describe al momento de exponer datos estadísticos general del objeto dentro de la función. Se puede usar en *listas, arreglos, matrices y data frames.*
+
+##Pregunta 6
+
+```{r}
+library(ggplot2)
+ggplot(data=Base_de_datos_, aes(x = edad, y = tratamiento)) +
+geom_boxplot() +
+geom_point(mapping=aes(color=edad), size=0.4, alpha=0.4, position = "jitter")
+```
+
+##Pregunta 7
+
+Enunciaremos un coeficiente que podrá dar una idea de cuánta molestia ha sentido el trabajador durante su enfermedad. Para ello tomaremos la idea más simple del ánalisis; que es dividir dos grupos de coeficiente los mayores de 0 y menores que 1 y los mayores de 1. En efecto, realizaremos una división y trataremos de usar una misma escala para edad y dolor.
+
+El coeficiente se llamará ***Í**ndice **D**olor **E**dad* y se calcula con la edad dividida por 4 (porque la base de datos tiene trabajadores de hasta 40 años) y el valor de dolor medido de 1 a 10.
+
+$$\textbf{I D E} = \dfrac{4\hspace{5pt} dolor}{edad}$$
+
+```{r}
+IDE_bruto <- (4*Base_de_datos_$score_dolor)/Base_de_datos_$edad
+
+IDE_bruto
+```
+
+Sin embargo, este coeficiente no toma en cuenta medicamente analgésicos ni tratamiento que disminuyen los sintomas(dolor). Así, tomemos 0.3 como valor máximo a este sumando de correción que es el promedio de estos dos valores mencionados.
+
+```{r}
+i <- 0
+Correccion1 <- Base_de_datos_$tratamiento
+
+Correccion2 <- Base_de_datos_$uso_medicamentos
+
+for (x in Base_de_datos_$tratamiento) {
+  i = i + 1 
+  if (x == 1) {
+     x = x*0.15
+   }
+   Correccion1[i] <- x
+}
+
+for (x in Base_de_datos_$uso_medicamentos) {
+  i = i + 1 
+  if (x == 1) {
+     x = x*0.15
+   }
+   Correccion2[i] <- x
+}
+
+Correccion_TOTAL <- (Correccion1 + Correccion2)/2
+
+Correccion_TOTAL
+
+```
+
+Luego, tomaremos el **IDE** y lo añadiremos como parámetro a la base de datos
+
+```{r}
+IDE_completo <- IDE_bruto + Correccion_TOTAL
+
+new_data_base_ <- data.frame(Base_de_datos_, "IDE" = IDE_completo)
+
+str(new_data_base_)
+```
